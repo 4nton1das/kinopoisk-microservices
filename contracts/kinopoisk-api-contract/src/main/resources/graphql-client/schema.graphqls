@@ -1,0 +1,158 @@
+enum ContentType {
+    MOVIE
+    SERIES
+    MINI_SERIES
+    DOCUMENTARY
+    CARTOON
+    ANIME
+    SHORT_MOVIE
+    TV_SHOW
+}
+
+enum Genre {
+    ACTION
+    COMEDY
+    DRAMA
+    FANTASY
+    HORROR
+    ROMANCE
+    SCI_FI
+    THRILLER
+    ANIMATION
+    CRIME
+    ADVENTURE
+    BIOGRAPHY
+    HISTORY
+    FAMILY
+    WAR
+    MYSTERY
+    DETECTIVE
+    WESTERN
+    MUSICAL
+    SPORT
+}
+
+enum Role {
+    ACTOR
+    DIRECTOR
+    WRITER
+    PRODUCER
+    COMPOSER
+    CINEMATOGRAPHER
+}
+
+type ContentParticipant {
+    personId: ID!
+    primaryName: String
+    role: Role
+    characterName: String
+}
+
+type PersonFilmography {
+    contentId: ID!
+    title: String
+    contentType: ContentType
+    releaseDate: String
+    role: Role
+    characterName: String
+}
+
+type Content {
+    id: ID!
+    title: String
+    description: String
+    contentType: ContentType
+    releaseDate: String
+    genres: [Genre]
+    participants: [ContentParticipant]
+    createdAt: String
+}
+
+type Person {
+    id: ID!
+    primaryName: String
+    birthDate: String
+    birthPlace: String
+    filmography: [PersonFilmography]
+}
+
+type ContentPage {
+    content: [Content]
+    pageNumber: Int
+    pageSize: Int
+    totalElements: Int
+    totalPages: Int
+    last: Boolean
+}
+
+type PersonPage {
+    content: [Person]
+    pageNumber: Int
+    pageSize: Int
+    totalElements: Int
+    totalPages: Int
+    last: Boolean
+}
+
+input ContentInput {
+    title: String!
+    description: String
+    contentType: ContentType!
+    releaseDate: String
+    genres: [Genre]
+}
+
+input PersonInput {
+    primaryName: String!
+    birthDate: String
+    birthPlace: String
+}
+
+input ContentParticipantInput {
+    personId: ID!
+    role: Role!
+    characterName: String
+}
+
+type Query {
+    # Контент
+    contents(
+        genre: Genre
+        contentType: ContentType
+        year: Int
+        search: String
+        page: Int = 0
+        size: Int = 20
+    ): ContentPage
+
+    contentById(id: ID!): Content
+
+    # Персоны
+    persons(
+        search: String
+        page: Int = 0
+        size: Int = 20
+    ): PersonPage
+
+    personById(id: ID!): Person
+
+    # Специальные запросы
+    contentByPerson(personId: ID!): [Content]
+    personsByContent(contentId: ID!): [Person]
+}
+
+type Mutation {
+    # Мутации для контента
+    createContent(input: ContentInput!): Content
+    updateContent(id: ID!, input: ContentInput!): Content
+    deleteContent(id: ID!): ID
+
+    # Мутации для персон
+    createPerson(input: PersonInput!): Person
+    updatePerson(id: ID!, input: PersonInput!): Person
+    deletePerson(id: ID!): ID
+
+    # Управление участниками
+    addParticipant(contentId: ID!, input: ContentParticipantInput!): Content
+    removeParticipant(contentId: ID!, personId: ID!): Content
+}

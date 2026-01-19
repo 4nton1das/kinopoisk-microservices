@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.kinopoisk.grpc";
+
+// Сервис для работы с пользователями, оценками, рецензиями и избранным
+service UserRatingService {
+  // === Оценки ===
+  rpc GetAverageRating(GetAverageRatingRequest) returns (AverageRatingResponse);
+  rpc RateContent(RateContentRequest) returns (RatingResponse);
+  rpc DeleteContentData(DeleteContentDataRequest) returns (DeleteContentDataResponse);
+  rpc GetUserRating(GetUserRatingRequest) returns (RatingResponse);
+  rpc GetContentRatings(GetContentRatingsRequest) returns (ContentRatingsResponse);
+  rpc DeleteRating(DeleteRatingRequest) returns (DeleteRatingResponse);
+
+  // === Рецензии ===
+  rpc AddReview(AddReviewRequest) returns (ReviewResponse);
+  rpc UpdateReview(UpdateReviewRequest) returns (ReviewResponse);
+  rpc DeleteReview(DeleteReviewRequest) returns (DeleteReviewResponse);
+  rpc GetUserReview(GetUserReviewRequest) returns (ReviewResponse);
+  rpc GetContentReviews(GetContentReviewsRequest) returns (ContentReviewsResponse);
+
+  // === Избранное ===
+  rpc AddToFavorites(AddToFavoritesRequest) returns (FavoriteResponse);
+  rpc RemoveFromFavorites(RemoveFromFavoritesRequest) returns (FavoriteResponse);
+  rpc GetUserFavorites(GetUserFavoritesRequest) returns (UserFavoritesResponse);
+  rpc IsInFavorites(IsInFavoritesRequest) returns (IsInFavoritesResponse);
+}
+
+// ===== Сообщения для оценок =====
+message GetAverageRatingRequest {
+  int64 content_id = 1;
+}
+
+// Ответ со средним рейтингом
+message AverageRatingResponse {
+  int64 content_id = 1;
+  double average_rating = 2;
+  int32 total_ratings = 3;
+}
+
+// Запрос на оценку контента
+message RateContentRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+  int32 rating = 3;  // 1-10
+}
+
+message DeleteContentDataRequest {
+  int64 content_id = 1;
+}
+
+// Ответ после оценки
+message RatingResponse {
+  int64 rating_id = 1;
+  int64 user_id = 2;
+  int64 content_id = 3;
+  int32 rating = 4;
+  int64 created_at = 5;
+}
+
+message GetUserRatingRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message GetContentRatingsRequest {
+  int64 content_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message DeleteRatingRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message DeleteContentDataResponse {
+  bool success = 1;
+  string message = 2;
+  int32 deleted_ratings = 3;
+  int32 deleted_reviews = 4;
+  int32 removed_from_favorites = 5;
+}
+
+message DeleteRatingResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ContentRatingsResponse {
+  repeated RatingResponse ratings = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+// ===== Сообщения для рецензий =====
+message AddReviewRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+  string title = 3;
+  string text = 4;
+  int32 rating = 5;  // опциональная оценка в рецензии
+  optional int64 review_id = 6;
+}
+
+message UpdateReviewRequest {
+  int64 review_id = 1;
+  string title = 2;
+  string text = 3;
+  int32 rating = 4;
+}
+
+message GetReviewIdRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message GetReviewIdResponse {
+  optional int64 review_id = 1;
+}
+
+message DeleteReviewRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message DeleteReviewResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message GetUserReviewRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message GetContentReviewsRequest {
+  int64 content_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ReviewResponse {
+  optional int64 review_id = 1;
+  int64 user_id = 2;
+  int64 content_id = 3;
+  string title = 4;
+  string text = 5;
+  int32 rating = 6;
+  int64 created_at = 7;
+  int64 updated_at = 8;
+}
+
+message ContentReviewsResponse {
+  repeated ReviewResponse reviews = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+// ===== Сообщения для избранного =====
+message AddToFavoritesRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message RemoveFromFavoritesRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message GetUserFavoritesRequest {
+  int64 user_id = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message IsInFavoritesRequest {
+  int64 user_id = 1;
+  int64 content_id = 2;
+}
+
+message FavoriteResponse {
+  int64 favorite_id = 1;
+  int64 user_id = 2;
+  int64 content_id = 3;
+  int64 added_at = 4;
+}
+
+message UserFavoritesResponse {
+  repeated FavoriteResponse favorites = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message IsInFavoritesResponse {
+  bool is_in_favorites = 1;
+  int64 added_at = 2;  // если есть
+}

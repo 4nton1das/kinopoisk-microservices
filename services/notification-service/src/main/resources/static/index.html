@@ -1,0 +1,480 @@
+<!-- Обновленный index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Kinopoisk Real-time Notifications</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .status-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-panel.disconnected {
+            border-left-color: #dc3545;
+        }
+
+        #status {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .connected { color: #28a745; }
+        .disconnected { color: #dc3545; }
+
+        .stats {
+            background: #e9ecef;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        #messages {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        /* Уведомления */
+        .notification {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+        }
+
+        .rating {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid #2196f3;
+        }
+
+        .review {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-left: 5px solid #4caf50;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-type {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 3px 10px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .rating-type {
+            background: #2196f3;
+        }
+
+        .review-type {
+            background: #4caf50;
+        }
+
+        .notification-time {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .notification-content {
+            margin-top: 8px;
+        }
+
+        .content-id {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .user-id {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .message-text {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            font-style: italic;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 16px;
+        }
+
+        /* Плавная прокрутка */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        #messages::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+        }
+
+        .btn-clear {
+            background: #6c757d;
+        }
+
+        .btn-clear:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Kinopoisk Real-time Notifications</h2>
+    <div class="subtitle">Получайте мгновенные уведомления о рейтингах и рецензиях</div>
+
+    <div id="statusPanel" class="status-panel">
+        <div>
+            Status: <span id="status" class="disconnected">Disconnected</span>
+        </div>
+        <div class="stats">
+            Active: <span id="connectionCount">0</span> |
+            Total: <span id="messageCount">0</span>
+        </div>
+    </div>
+
+    <div id="messages">
+        <div class="empty-state">
+            Уведомления появятся здесь в реальном времени
+            <br><br>
+            Откройте <a href="http://localhost:8080/swagger-ui.html" target="_blank">Swagger UI</a> и выполните:
+            <br>1. POST /api/ratings/content/1/rate?userId=1&rating=8
+            <br>2. POST /api/reviews/content/1?userId=1&title=Отличный&text=Великолепная актерская игра и сюжет&rating=9
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-clear" onclick="clearNotifications()">Очистить все</button>
+        <button class="btn" onclick="sendTestNotification()">Тестовое уведомление</button>
+    </div>
+</div>
+
+<script>
+    const statusSpan = document.getElementById('status');
+    const statusPanel = document.getElementById('statusPanel');
+    const connectionCountSpan = document.getElementById('connectionCount');
+    const messageCountSpan = document.getElementById('messageCount');
+    const messagesDiv = document.getElementById('messages');
+
+    let socket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectDelay = 30000;
+    let totalMessages = 0;
+
+    function connect() {
+        if (socket && socket.readyState === WebSocket.CONNECTING) {
+            return;
+        }
+
+        if (window.reconnectTimer) {
+            clearTimeout(window.reconnectTimer);
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/notifications`;
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = function() {
+            reconnectAttempts = 0;
+            statusSpan.textContent = 'Connected';
+            statusSpan.className = 'connected';
+            statusPanel.className = 'status-panel';
+
+            const emptyState = messagesDiv.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+
+            log('WebSocket connection established', 'log');
+            updateConnectionCount();
+        };
+
+        socket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("Получено событие:", data);
+                totalMessages++;
+                messageCountSpan.textContent = totalMessages;
+
+                if (data.type === 'RATING_UPDATE') {
+                    showRatingNotification(data);
+                } else if (data.type === 'REVIEW_CREATED') {
+                    showReviewNotification(data);
+                }
+            } catch (e) {
+                // Если не JSON, показываем как обычный текст
+                console.error('Ошибка парсинга JSON:', e);
+                showSimpleNotification(event.data);
+            }
+        };
+
+        socket.onclose = function(event) {
+            statusSpan.textContent = 'Disconnected';
+            statusSpan.className = 'disconnected';
+            statusPanel.className = 'status-panel disconnected';
+
+            log(`Соединение закрыто: ${event.reason || 'Без указания причины'}`, 'log');
+
+            // Переподключение с экспоненциальной задержкой
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), maxReconnectDelay);
+            reconnectAttempts++;
+            log(`Попытка переподключения через ${delay/1000} секунд (попытка ${reconnectAttempts})...`, 'log');
+
+            window.reconnectTimer = setTimeout(connect, delay);
+        };
+
+        socket.onerror = function(error) {
+            log('Ошибка WebSocket', 'error');
+            console.error('WebSocket error:', error);
+        };
+    }
+
+    function log(text, type = 'log') {
+        console.log(`[${new Date().toLocaleTimeString()}] ${text}`);
+    }
+
+    function updateConnectionCount() {
+        fetch('/api/notifications/stats')
+            .then(response => response.json())
+            .then(data => {
+                connectionCountSpan.textContent = data.activeConnections;
+            })
+            .catch(err => console.error('Ошибка получения статистики:', err));
+    }
+
+    function showRatingNotification(data) {
+        const notification = document.createElement('div');
+        notification.className = 'notification rating';
+        notification.innerHTML = `
+            <div class="notification-header">
+                <span class="notification-type rating-type">НОВЫЙ РЕЙТИНГ</span>
+                <span class="notification-time">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="notification-content">
+                <span class="content-id">Контент ID: ${data.contentId}</span>
+                <span class="user-id">Пользователь ID: ${data.userId}</span>
+                <div style="margin-top: 8px;">
+                    <strong>Оценка:</strong> ${'★'.repeat(data.rating)}${'☆'.repeat(10-data.rating)} (${data.rating}/10)
+                </div>
+            </div>
+        `;
+
+        const emptyState = messagesDiv.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        messagesDiv.appendChild(notification);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showReviewNotification(data) {
+        const notification = document.createElement('div');
+        notification.className = 'notification review';
+        notification.innerHTML = `
+            <div class="notification-header">
+                <span class="notification-type review-type">${data.isNewReview ? 'НОВАЯ' : 'ОБНОВЛЕННАЯ'} РЕЦЕНЗИЯ</span>
+                <span class="notification-time">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="notification-content">
+                <span class="content-id">Контент ID: ${data.contentId}</span>
+                <span class="user-id">Пользователь ID: ${data.userId}</span>
+                <div style="margin-top: 8px;">
+                    <strong>Заголовок:</strong> "${data.title}"
+                </div>
+            </div>
+        `;
+
+        const emptyState = messagesDiv.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        messagesDiv.appendChild(notification);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function showSimpleNotification(text) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.innerHTML = `
+            <div class="notification-header">
+                <span class="notification-type" style="background: #ff9800;">УВЕДОМЛЕНИЕ</span>
+                <span class="notification-time">${new Date().toLocaleTimeString()}</span>
+            </div>
+            <div class="notification-content">
+                ${text}
+            </div>
+        `;
+
+        const emptyState = messagesDiv.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
+        }
+
+        messagesDiv.appendChild(notification);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function clearNotifications() {
+        while (messagesDiv.firstChild) {
+            messagesDiv.removeChild(messagesDiv.firstChild);
+        }
+
+        // Добавляем сообщение о пустом состоянии
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = `
+            Уведомления появятся здесь в реальном времени
+            <br><br>
+            Откройте <a href="http://localhost:8080/swagger-ui.html" target="_blank">Swagger UI</a> и выполните:
+            <br>1. POST /api/ratings/content/1/rate?userId=1&rating=8
+            <br>2. POST /api/reviews/content/1?userId=1&title=Отличный&text=Великолепная актерская игра и сюжет&rating=9
+        `;
+        messagesDiv.appendChild(emptyState);
+
+        totalMessages = 0;
+        messageCountSpan.textContent = totalMessages;
+    }
+
+    function sendTestNotification() {
+        // Отправляем тестовое уведомление через REST API
+        fetch('/api/notifications/broadcast', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain',
+            },
+            body: 'Это тестовое уведомление от системы!'
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Тестовое уведомление отправлено:', data);
+        })
+        .catch(error => {
+            console.error('Ошибка отправки тестового уведомления:', error);
+        });
+    }
+
+    // Автоматическое подключение при загрузке страницы
+    window.addEventListener('load', connect);
+
+    // Обновление количества подключений каждые 10 секунд
+    setInterval(updateConnectionCount, 10000);
+
+    window.addEventListener('load', function() {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+</script>
+</body>
+</html>
